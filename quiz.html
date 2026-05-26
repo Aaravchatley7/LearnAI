@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ topic }}{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="/">Home</a> <span style="color:var(--muted2)">›</span>
+      <a href="{{ url_for('chapters') }}">Chapters</a> <span style="color:var(--muted2)">›</span>
+      <a href="{{ url_for('chapter', chapter_name=chapter_name) }}">{{ chapter_name[:36] }}{% if chapter_name|length > 36 %}…{% endif %}</a> <span style="color:var(--muted2)">›</span>
+      <span style="color:var(--neon);">Topic {{ current_idx + 1 }}/{{ topics|length }}</span>
+    </div>
+    <h1>{{ topic }}</h1>
+    <div class="progress-bar-wrap" style="margin-top:20px;">
+      <div class="progress-bar-fill" style="width: {{ progress_percent }}%;"></div>
+    </div>
+  </div>
+
+  <div class="section-label">AI Explanation</div>
+  <div class="explanation-card">
+    {% for para in explanation.split('\n') %}
+      {% if para.strip() %}
+        <p>{{ para.strip() }}</p>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="section-label">Quick Quiz — {{ mcqs|length }} Questions</div>
+
+  {% if mcqs %}
+    <form id="quiz-form" action="/submit_quiz" method="POST">
+      <input type="hidden" name="topic_name"     value="{{ topic }}" />
+      <input type="hidden" name="total_questions" value="{{ mcqs|length }}" />
+      <input type="hidden" name="next_topic"      value="{{ next_topic or '' }}" />
+      <input type="hidden" name="topics_list"     value="{{ topics | join(',') }}" />
+
+      {% for mcq in mcqs %}
+        {% set mcq_idx = loop.index0 %}
+        <div class="question-card">
+          <span class="q-num">Q{{ loop.index }} of {{ mcqs|length }}</span>
+          <p class="question-text">{{ mcq.question }}</p>
+          <input type="hidden" name="question{{ mcq_idx }}" value="{{ mcq.question }}" />
+          <input type="hidden" name="correct{{ mcq_idx }}"  value="{{ mcq.correct }}" />
+          <div class="options-list">
+            {% for key in ['A', 'B', 'C', 'D'] %}
+              <label class="option-label">
+                <input type="radio" name="q{{ mcq_idx }}" value="{{ key }}" required />
+                <span class="option-key">{{ key }}</span>
+                <span class="option-text">{{ mcq.options[key] }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+
+      <div style="display:flex; gap:12px; margin-top:8px;">
+        <a href="{{ url_for('chapter', chapter_name=chapter_name) }}" class="btn btn-ghost">← Back</a>
+        <button type="submit" class="btn btn-primary" style="flex:1; justify-content:center;">
+          Submit Answers →
+        </button>
+      </div>
+    </form>
+
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">❓</div>
+      <h3>Couldn't generate questions</h3>
+      <p>Try refreshing or choose another topic.</p>
+    </div>
+    <div style="display:flex; gap:12px; margin-top:20px;">
+      <a href="{{ url_for('chapter', chapter_name=chapter_name) }}" class="btn btn-ghost">← Back to Topics</a>
+      {% if next_topic %}
+        <a href="{{ url_for('topic', topic_name=next_topic) }}" class="btn btn-primary">Next Topic →</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

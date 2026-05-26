@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}LearnAI{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
+</head>
+<body data-active-tab="{{ active_tab | default('upload') }}">
+
+<!-- Animated bubble canvas -->
+<canvas id="bubble-canvas"></canvas>
+
+<nav>
+  <a class="nav-brand" href="/">LearnAI</a>
+  <div class="nav-links">
+    <a href="/" class="{% block nav_home %}{% endblock %}">Home</a>
+    <a href="{{ url_for('progress') }}" class="{% block nav_progress %}{% endblock %}">Progress</a>
+    {% if session.get('book_name') %}
+    <a href="{{ url_for('chapters') }}" class="{% block nav_chapters %}{% endblock %}">Chapters</a>
+    {% endif %}
+  </div>
+</nav>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Processing…</div>
+  <div class="loading-sub">Please wait</div>
+</div>
+
+{% block content %}{% endblock %}
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

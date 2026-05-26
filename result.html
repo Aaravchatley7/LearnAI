@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Result — {{ topic_name }}{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+
+  <div class="result-hero">
+    <div class="score-circle {{ score_color }}">
+      <span class="score-num">{{ score }}/{{ total }}</span>
+      <span class="score-label">Score</span>
+    </div>
+    <h2>
+      {{ score_emoji }}
+      {% if pct >= 80 %}Excellent work!
+      {% elif pct >= 60 %}Good effort!
+      {% else %}Keep practising!
+      {% endif %}
+    </h2>
+    <p style="color:var(--muted); margin-top:8px; font-size:0.9rem;">
+      <span style="color:var(--neon);">{{ pct }}%</span>
+      &nbsp;·&nbsp;
+      Topic: <strong style="color:var(--text);">{{ topic_name }}</strong>
+      &nbsp;·&nbsp;
+      {{ chapter_name[:40] }}{% if chapter_name|length > 40 %}…{% endif %}
+    </p>
+  </div>
+
+  <div class="section-label">Answer Review</div>
+  <div class="review-list">
+    {% for r in results %}
+      <div class="review-item {{ 'correct' if r.is_correct else 'wrong' }}">
+        <p class="review-q">{{ loop.index }}. {{ r.question }}</p>
+        <div class="review-answers">
+          <span class="review-tag {{ 'correct-tag' if r.is_correct else 'wrong-tag' }}">
+            Your answer: {{ r.user_answer or 'Not answered' }}
+          </span>
+          {% if not r.is_correct %}
+            <span class="review-tag answer-tag">✓ Correct: {{ r.correct_answer }}</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div style="display:flex; gap:12px; margin-top:36px; flex-wrap:wrap;">
+    <a href="{{ url_for('chapter', chapter_name=chapter_name) }}" class="btn btn-ghost">
+      ← Back to Topics
+    </a>
+    {% if next_topic %}
+      <a href="{{ url_for('topic', topic_name=next_topic) }}" class="btn btn-primary">
+        Next: {{ next_topic[:28] }}{% if next_topic|length > 28 %}…{% endif %} →
+      </a>
+    {% else %}
+      <a href="/?tab=progress" class="btn btn-gold">📊 View Progress</a>
+      <a href="{{ url_for('chapters') }}" class="btn btn-primary">All Chapters</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

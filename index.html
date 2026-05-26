@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+{% block title %}LearnAI — AI-Powered Book Learning{% endblock %}
+{% block nav_home %}nav-active{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO ──────────────────────────────────────────────────────────────────── -->
+<section class="landing-hero">
+  <div class="landing-hero-inner">
+    <span class="hero-eyebrow">⚡ Powered by Groq &amp; Llama 3.3</span>
+    <h1>
+      <span class="line1">Turn any book into</span>
+      <span class="line2">your personal AI teacher</span>
+    </h1>
+    <p class="hero-sub">Upload a PDF — get instant chapter summaries, topic-by-topic explanations, and quizzes grounded in the actual content.</p>
+    <div class="hero-cta-row">
+      <a href="#upload-tab-anchor" class="btn btn-primary btn-lg" id="hero-cta">
+        ✨ Upload a Book
+      </a>
+      <a href="#features-section" class="btn btn-ghost btn-lg">How it works ↓</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><span>⚡</span> <strong>~3s</strong> avg response</div>
+      <div class="hero-stat"><span>🧠</span> <strong>Llama 3.3 70B</strong> model</div>
+      <div class="hero-stat"><span>✅</span> <strong>4 MCQs</strong> per topic</div>
+      <div class="hero-stat"><span>📊</span> <strong>Full</strong> progress tracking</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TABBED CONTENT ─────────────────────────────────────────────────────────── -->
+<div class="tabs-shell" id="upload-tab-anchor">
+  <div class="tabs-nav" role="tablist">
+
+    <button class="tab-btn {% if request.args.get('tab') != 'chapters' %}active{% endif %}"
+            data-tab="upload"
+            role="tab">
+
+      📄 Upload
+
+    </button>
+
+    <button class="tab-btn {% if request.args.get('tab') == 'chapters' %}active{% endif %}"
+            data-tab="chapters"
+            role="tab">
+
+      📚 Chapters
+
+    </button>
+
+    <button class="tab-btn"
+            data-tab="progress"
+            role="tab">
+
+      📊 Progress
+
+    </button>
+
+    <button class="tab-btn"
+            data-tab="books"
+            role="tab">
+
+      📘 Default Books
+
+    </button>
+
+    <button class="tab-btn"
+            data-tab="about"
+            role="tab">
+
+      💡 About
+
+    </button>
+
+  </div>
+
+  <!-- ── Upload Tab ──────────────────────────────────────────────────────────── -->
+  <div class="tab-panel {% if request.args.get('tab') != 'chapters' %}active{% endif %}"
+     id="tab-upload">
+    <div class="tab-panel-inner">
+      {% if error %}
+        <div class="alert">{{ error }}</div>
+      {% endif %}
+
+      <div class="upload-split">
+        <div class="upload-left">
+          <h2 class="tab-heading">Upload your book</h2>
+          <p class="tab-sub">Supports any PDF — textbooks, research papers, novels. Our AI handles the rest.</p>
+
+          <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
+            <div class="upload-zone" id="upload-zone">
+              <input type="file" name="pdf" id="pdf-input" accept=".pdf" />
+              <div class="upload-zone-content">
+                <span class="upload-icon">📄</span>
+                <strong id="file-label">Click to choose a PDF</strong>
+                <p>or drag &amp; drop here</p>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">
+              ✨ Analyse Book
+            </button>
+          </form>
+
+          <div class="upload-tips">
+            <div class="tip-item"><span>⚡</span> Results in ~3–5 seconds with Groq</div>
+            <div class="tip-item"><span>📖</span> Best with books that have clear chapter headings</div>
+            <div class="tip-item"><span>🔒</span> Your file is processed locally</div>
+          </div>
+        </div>
+
+        <div class="upload-right">
+          <div class="steps-card">
+            <div class="steps-header">How it works</div>
+            <div class="step-row">
+              <div class="step-num">1</div>
+              <div>
+                <strong>Upload PDF</strong>
+                <p>Our AI reads and detects chapters automatically</p>
+              </div>
+            </div>
+            <div class="step-row">
+              <div class="step-num">2</div>
+              <div>
+                <strong>Get a Summary</strong>
+                <p>Each chapter is summarised in simple language</p>
+              </div>
+            </div>
+            <div class="step-row">
+              <div class="step-num">3</div>
+              <div>
+                <strong>Learn Topic by Topic</strong>
+                <p>AI explains each topic with examples</p>
+              </div>
+            </div>
+            <div class="step-row">
+              <div class="step-num">4</div>
+              <div>
+                <strong>Take Quizzes</strong>
+                <p>4 MCQs per topic, matched to the actual content</p>
+              </div>
+            </div>
+            <div class="step-row">
+              <div class="step-num">5</div>
+              <div>
+                <strong>Track Progress</strong>
+                <p>See your scores across all chapters and topics</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Chapters Tab ────────────────────────────────────────────────────────── -->
+  <div class="tab-panel {% if request.args.get('tab') == 'chapters' %}active{% endif %}"
+     id="tab-chapters">
+    <div class="tab-panel-inner">
+      {% if session.get('book_name') %}
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:28px;">
+          <div>
+            <h2 class="tab-heading" style="margin-bottom:4px;">{{ session.get('book_name') }}</h2>
+            <p class="tab-sub">Click a chapter to start learning</p>
+          </div>
+          <a href="/" class="btn btn-ghost btn-sm" onclick="document.querySelector('[data-tab=upload]').click(); return false;">
+            + New Book
+          </a>
+        </div>
+        {% if chapters_list %}
+          <div class="chapter-grid">
+            {% for ch in chapters_list %}
+              <a class="chapter-card" href="{{ url_for('chapter', chapter_name=ch) }}">
+                <span class="chapter-num">{{ loop.index }}</span>
+                <h3>{{ ch }}</h3>
+                <span class="arrow">→</span>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <h3>No chapters yet</h3>
+            <p>Upload a book in the Upload tab to see chapters here.</p>
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📚</div>
+          <h3>No book uploaded yet</h3>
+          <p>Head to the Upload tab to get started.</p>
+          <button class="btn btn-primary" style="margin-top:20px;" onclick="switchTab('upload')">
+            ✨ Upload a Book
+          </button>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Progress Tab ────────────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-progress">
+    <div class="tab-panel-inner">
+      <h2 class="tab-heading">Your Progress</h2>
+      <p class="tab-sub">Scores across all chapters and topics</p>
+
+      {% if progress_records %}
+        {% set total_q       = progress_records|length %}
+        {% set avg_pct       = (progress_records | map(attribute='pct') | list | sum / total_q) | round(1) %}
+        {% set passed        = progress_records | selectattr('pct','ge',60) | list | length %}
+        {% set failed        = total_q - passed %}
+        {% set chapters_done = progress_records | map(attribute='chapter') | list | unique | list | length %}
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-num">{{ total_q }}</div>
+            <div class="stat-lbl">Quizzes Done</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">{{ avg_pct }}%</div>
+            <div class="stat-lbl">Avg Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">{{ passed }}</div>
+            <div class="stat-lbl">Passed (≥60%)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">{{ chapters_done }}</div>
+            <div class="stat-lbl">Chapters</div>
+          </div>
+        </div>
+
+        <!-- ── Charts row ──────────────────────────────────────────────────── -->
+        <div class="charts-row">
+
+          <!-- Pass / Fail pie -->
+          <div class="chart-card">
+            <div class="chart-card-title">Pass vs Fail</div>
+            <canvas id="chart-passfail" width="200" height="200"></canvas>
+            <div class="chart-legend">
+              <span class="legend-dot" style="background:var(--success)"></span> Passed ({{ passed }})
+              &nbsp;&nbsp;
+              <span class="legend-dot" style="background:var(--danger)"></span> Failed ({{ failed }})
+            </div>
+          </div>
+
+          <!-- Score band pie -->
+          <div class="chart-card">
+            <div class="chart-card-title">Score Bands</div>
+            <canvas id="chart-bands" width="200" height="200"></canvas>
+            <div class="chart-legend">
+              <span class="legend-dot" style="background:var(--success)"></span> 80–100%
+              &nbsp;
+              <span class="legend-dot" style="background:var(--warning)"></span> 60–79%
+              &nbsp;
+              <span class="legend-dot" style="background:var(--danger)"></span> &lt;60%
+            </div>
+          </div>
+
+          <!-- Per-topic bar-style score (rendered as a horizontal bar via canvas) -->
+          
+
+        </div>
+
+        <!-- Pass the data to JS via a hidden JSON block -->
+        <script id="progress-data" type="application/json">
+          {{ progress_records | tojson }}
+        </script>
+
+        <!-- ── Table ───────────────────────────────────────────────────────── -->
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-top:8px;">
+          <table class="progress-table">
+            <thead>
+              <tr>
+                <th>Chapter</th><th>Topic</th><th>Score</th><th>Result</th><th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in progress_records %}
+                <tr>
+                  <td style="color:var(--muted); font-size:0.82rem;">{{ r.chapter[:35] }}{% if r.chapter|length>35 %}…{% endif %}</td>
+                  <td style="font-weight:500;">{{ r.topic[:38] }}{% if r.topic|length>38 %}…{% endif %}</td>
+                  <td>{{ r.score }}/{{ r.total }}</td>
+                  <td><span class="pct-pill {{ r.color }}">{{ r.pct }}%</span></td>
+                  <td style="color:var(--muted); font-size:0.8rem;">{{ r.timestamp[:10] if r.timestamp else '—' }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <h3>No quiz results yet</h3>
+          <p>Upload a book, pick a topic, and complete a quiz to see your progress here.</p>
+          <button class="btn btn-primary" style="margin-top:20px;" onclick="switchTab('upload')">
+            Get Started
+          </button>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+    <!-- ── Default Books Tab ─────────────────────────────────────────────────── -->
+
+  <div class="tab-panel" id="tab-books">
+    <div class="tab-panel-inner">
+
+      <h2 class="tab-heading">Built-in Books Library</h2>
+
+      <p class="tab-sub">
+        Instantly start learning using preloaded books.
+      </p>
+
+      <!-- Science -->
+
+      <div class="book-category">
+
+        <h3 class="category-title">🔬 Science</h3>
+
+        <div class="books-grid">
+
+          <div class="book-card">
+            <div class="book-icon">📘</div>
+            <div class="book-name">Physics Basics</div>
+
+            <a href="/books/science/Physics Fundamentals.pdf"
+              class="btn btn-primary btn-full">
+
+              Open Book
+
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Mathematics -->
+
+      <div class="book-category">
+
+        <h3 class="category-title">➗ Mathematics</h3>
+
+        <div class="books-grid">
+
+          <div class="book-card">
+            <div class="book-icon">📗</div>
+            <div class="book-name">Discrete Mathematics</div>
+
+            <a href="/books/maths/Maths Fundamentals.pdf"
+              class="btn btn-primary btn-full">
+
+              Open Book
+
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Medical -->
+
+      <div class="book-category">
+
+        <h3 class="category-title">🩺 Medical</h3>
+
+        <div class="books-grid">
+
+
+          <div class="book-card">
+            <div class="book-icon">📕</div>
+            <div class="book-name">Medical Terminology</div>
+
+            <a href="/books/medicine/Medical Standard Guidelines.pdf"
+              class="btn btn-primary btn-full">
+
+              Open Book
+
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Sports -->
+
+      <div class="book-category">
+
+        <h3 class="category-title">⚽ Sports</h3>
+
+        <div class="books-grid">
+
+          <div class="book-card">
+            <div class="book-icon">📙</div>
+            <div class="book-name">Sports Science</div>
+
+            <a href="/books/sports/Sports & Physical Education.pdf"
+              class="btn btn-primary btn-full">
+
+              Open Book
+
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Economics -->
+
+      <div class="book-category">
+
+        <h3 class="category-title">💰 Economics</h3>
+
+        <div class="books-grid">
+
+          <div class="book-card">
+            <div class="book-icon">📒</div>
+            <div class="book-name">Macroeconomics</div>
+
+            <a href="/books/economics/Macroeconomics.pdf"
+              class="btn btn-primary btn-full">
+
+              Open Book
+
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Geography -->
+
+      <div class="book-category">
+
+        <h3 class="category-title">🌍 Geography</h3>
+
+        <div class="books-grid">
+
+          <div class="book-card">
+            <div class="book-icon">📓</div>
+            <div class="book-name">Environmental Geography</div>
+
+            <a href="/books/geography/Geography.pdf"
+              class="btn btn-primary btn-full">
+
+              Open Book
+
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── About Tab ───────────────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-about">
+    <div class="tab-panel-inner">
+      <h2 class="tab-heading">About LearnAI</h2>
+      <p class="tab-sub">A self-learning system powered by modern AI — no human teacher required.</p>
+
+      <div class="about-grid">
+        <div class="about-card">
+          <div class="about-icon">⚡</div>
+          <h3>Fast by Design</h3>
+          <p>All AI tasks — summaries, explanations, and quizzes — run on <strong>Groq's inference engine</strong> using Llama 3.3 70B. This gives you responses in 1–3 seconds instead of 10–15.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">🎯</div>
+          <h3>Content-Grounded MCQs</h3>
+          <p>Quiz questions are generated from the <strong>actual chapter text</strong>, not from the model's general knowledge. Each topic gets 4 unique questions every time.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">📖</div>
+          <h3>Smart Chapter Detection</h3>
+          <p>The system first tries <strong>pattern matching</strong> (Chapter 1, Unit 2, etc.) then falls back to AI detection — so it works on almost any PDF structure.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">📊</div>
+          <h3>Progress Tracking</h3>
+          <p>Every quiz result is stored in a local SQLite database. Your scores, chapters, and topics are all tracked so you can see where you're strong and where to improve.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">🔄</div>
+          <h3>Fallback Safety</h3>
+          <p>If Groq is unavailable, the system <strong>automatically retries with OpenRouter</strong> — so you always get a response, just slightly slower.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">🛠️</div>
+          <h3>Tech Stack</h3>
+          <p><strong>Flask</strong> backend · <strong>Groq API</strong> (Llama 3.3 70B) · <strong>OpenRouter</strong> fallback · <strong>PyPDF2</strong> extraction · <strong>SQLite</strong> storage</p>
+        </div>
+      </div>
+
+      <div class="about-api-box">
+        <div class="about-api-title">🔑 API Keys Required</div>
+        <div class="about-api-row">
+          <span class="about-api-label">Groq (primary — fast)</span>
+          <code>GROQ_API_KEY</code>
+          <a href="https://console.groq.com" target="_blank" class="btn btn-ghost btn-sm">Get free key →</a>
+        </div>
+        <div class="about-api-row">
+          <span class="about-api-label">OpenRouter (fallback)</span>
+          <code>OPENROUTER_API_KEY</code>
+          <a href="https://openrouter.ai" target="_blank" class="btn btn-ghost btn-sm">Get key →</a>
+        </div>
+        <p style="margin-top:14px; font-size:0.82rem; color:var(--muted);">Set both in your <code>.env</code> file in the project root.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tabs-shell -->
+
+<!-- ── FEATURES SECTION ───────────────────────────────────────────────────────── -->
+<section class="features-section" id="features-section">
+  <div class="page-wrap">
+    <div class="features-eyebrow">Everything you need to learn faster</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">📄</span>
+        <h3>PDF Upload</h3>
+        <p>Any PDF — textbooks, papers, guides. Drag-and-drop or click to select.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔍</span>
+        <h3>Auto Chapter Detection</h3>
+        <p>Regex patterns catch most books instantly. AI fallback handles the rest.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📝</span>
+        <h3>Chapter Summaries</h3>
+        <p>Each chapter distilled into 3 clear paragraphs before you start learning.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💬</span>
+        <h3>Topic Explanations</h3>
+        <p>Simple, example-driven explanations for every key topic in the chapter.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">✅</span>
+        <h3>Instant MCQs</h3>
+        <p>4 content-grounded questions per topic. Immediate answer review.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📈</span>
+        <h3>Score Dashboard</h3>
+        <p>Track every quiz result with pass/fail indicators and timestamps.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

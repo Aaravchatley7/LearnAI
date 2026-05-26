@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ chapter_name }}{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="/">Home</a> <span style="color:var(--muted2)">›</span>
+      <a href="{{ url_for('chapters') }}">Chapters</a> <span style="color:var(--muted2)">›</span>
+      Summary
+    </div>
+    <h1>{{ chapter_name }}</h1>
+    <p class="subtitle">Read the summary, then dive into each topic</p>
+  </div>
+
+  <div class="section-label">Chapter Summary</div>
+  <div class="summary-box">
+    {% for paragraph in summary.split('\n') %}
+      {% if paragraph.strip() %}
+        <p>{{ paragraph.strip() }}</p>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="topics-header">
+    <h2>Learning Path</h2>
+    <span class="topic-count-badge">{{ topics|length }} Topics</span>
+  </div>
+
+  <div class="topics-list">
+    {% for topic in topics %}
+      <a class="topic-item" href="{{ url_for('topic', topic_name=topic) }}">
+        <span class="topic-bullet">{{ loop.index }}</span>
+        <span>{{ topic }}</span>
+        <span style="color:var(--muted2); font-size:0.85rem;">→</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  <div style="margin-top:36px; display:flex; gap:12px; flex-wrap:wrap;">
+    <a href="{{ url_for('chapters') }}" class="btn btn-ghost">← Back to Chapters</a>
+    {% if topics %}
+      <a href="{{ url_for('topic', topic_name=topics[0]) }}" class="btn btn-primary">
+        Start Learning →
+      </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

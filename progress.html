@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Progress Dashboard{% endblock %}
+{% block nav_progress %}nav-active{% endblock %}
+
+{% block content %}
+<div class="page-wrap progress-page-wrap">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="/">Home</a> <span style="color:var(--muted2)">›</span> Progress</div>
+    <h1>Progress Dashboard</h1>
+    <p class="subtitle">Your scores across all chapters and topics</p>
+  </div>
+
+  {% if records %}
+    {% set total_q       = records|length %}
+    {% set avg_pct       = (records | map(attribute='pct') | list | sum / total_q) | round(1) %}
+    {% set passed        = records | selectattr('pct','ge',60) | list | length %}
+    {% set failed        = total_q - passed %}
+    {% set chapters_done = records | map(attribute='chapter') | list | unique | list | length %}
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num">{{ total_q }}</div><div class="stat-lbl">Quizzes Done</div></div>
+      <div class="stat-card"><div class="stat-num">{{ avg_pct }}%</div><div class="stat-lbl">Avg Score</div></div>
+      <div class="stat-card"><div class="stat-num">{{ passed }}</div><div class="stat-lbl">Passed</div></div>
+      <div class="stat-card"><div class="stat-num">{{ chapters_done }}</div><div class="stat-lbl">Chapters</div></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-card-title">Pass vs Fail</div>
+        <canvas id="chart-passfail" width="200" height="200"></canvas>
+        <div class="chart-legend">
+          <span class="legend-dot" style="background:var(--success)"></span> Passed ({{ passed }})
+          &nbsp;
+          <span class="legend-dot" style="background:var(--danger)"></span> Failed ({{ failed }})
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Score Bands</div>
+        <canvas id="chart-bands" width="200" height="200"></canvas>
+        <div class="chart-legend">
+          <span class="legend-dot" style="background:var(--success)"></span> 80–100%
+          &nbsp;
+          <span class="legend-dot" style="background:var(--warning)"></span> 60–79%
+          &nbsp;
+          <span class="legend-dot" style="background:var(--danger)"></span> &lt;60%
+        </div>
+      </div>
+    
+    </div>
+
+    <script id="progress-data" type="application/json">{{ records | tojson }}</script>
+
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;">
+      <table class="progress-table">
+        <thead>
+          <tr><th>Chapter</th><th>Topic</th><th>Score</th><th>Result</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+            <tr>
+              <td style="color:var(--muted); font-size:0.82rem;">{{ r.chapter[:35] }}{% if r.chapter|length>35 %}…{% endif %}</td>
+              <td style="font-weight:500;">{{ r.topic[:38] }}{% if r.topic|length>38 %}…{% endif %}</td>
+              <td>{{ r.score }}/{{ r.total }}</td>
+              <td><span class="pct-pill {{ r.color }}">{{ r.pct }}%</span></td>
+              <td style="color:var(--muted); font-size:0.8rem;">{{ r.timestamp[:10] if r.timestamp else '—' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <h3>No quiz results yet</h3>
+      <p>Upload a book, pick a topic, and complete a quiz to track your progress.</p>
+      <a href="/" class="btn btn-primary" style="margin-top:24px;">Get Started</a>
+    </div>
+  {% endif %}
+
+  <div style="margin-top:28px;">
+    <a href="/" class="btn btn-ghost">← Back to Home</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Chapters — {{ book_name }}{% endblock %}
+{% block nav_chapters %}nav-active{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="/">Home</a> <span style="color:var(--muted2)">›</span> Chapters
+    </div>
+    <h1>{{ book_name or 'Your Book' }}</h1>
+    <p class="subtitle">
+      <span style="color:var(--neon); font-weight:600;">{{ chapters|length }}</span>
+      chapter{{ 's' if chapters|length != 1 }} detected — click one to begin
+    </p>
+  </div>
+
+  {% if chapters %}
+    <div class="chapter-grid">
+      {% for chapter in chapters %}
+        <a class="chapter-card" href="{{ url_for('chapter', chapter_name=chapter) }}">
+          <span class="chapter-num">{{ '%02d'|format(loop.index) }}</span>
+          <h3>{{ chapter }}</h3>
+          <span class="arrow">→</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">😕</div>
+      <h3>No chapters detected</h3>
+      <p>Try a PDF with clear "Chapter 1", "Unit 2" style headings.</p>
+      <a href="/" class="btn btn-primary" style="margin-top:24px;">← Upload Again</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
